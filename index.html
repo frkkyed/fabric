@@ -1,29 +1,30 @@
 <script>
-  const API_URL = 'https://fabric-recognition-392312507551.europe-west1.run.app';
-  const resultDiv = document.getElementById('result');
+  document.addEventListener('DOMContentLoaded', () => {
+    const API_URL = 'https://fabric-recognition-392312507551.europe-west1.run.app';
+    const resultDiv = document.getElementById('result');
+    const button = document.getElementById('testButton');
 
-  document.getElementById('testButton').addEventListener('click', async () => {
-    resultDiv.textContent = 'Tester forbindelse...';
-    resultDiv.style.backgroundColor = '#ffffcc';
+    button.addEventListener('click', async () => {
+      resultDiv.textContent = 'Tester forbindelse...';
+      resultDiv.style.backgroundColor = '#ffffcc';
 
-    try {
-      const response = await fetch(API_URL, {
-        method: 'GET',
-      });
+      try {
+        const response = await fetch(API_URL, { method: 'GET' });
 
-      if (response.ok) {
-        const data = await response.json();
-        resultDiv.textContent = 'Forbindelse oprettet: ' + data.data.message;
-        resultDiv.style.backgroundColor = '#ccffcc';
-      } else {
-        resultDiv.textContent = 'Fejl: ' + response.status;
+        if (response.ok) {
+          const data = await response.json();
+          resultDiv.textContent = 'Forbindelse oprettet: ' + data.data.message;
+          resultDiv.style.backgroundColor = '#ccffcc';
+        } else {
+          resultDiv.textContent = 'Fejl: ' + response.status;
+          resultDiv.style.backgroundColor = '#ffcccc';
+          console.error('Response fejl:', response);
+        }
+      } catch (error) {
+        resultDiv.textContent = 'Fejl: ' + error.message;
         resultDiv.style.backgroundColor = '#ffcccc';
-        console.error('Response fejl:', response);
+        console.error('Fetch error:', error);
       }
-    } catch (error) {
-      resultDiv.textContent = 'Fejl: ' + error.message;
-      resultDiv.style.backgroundColor = '#ffcccc';
-      console.error('Fetch error:', error);
-    }
+    });
   });
 </script>
