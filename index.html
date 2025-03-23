@@ -16,10 +16,11 @@
       resultDiv.textContent = 'Tester forbindelse...';
       resultDiv.style.backgroundColor = '#ffffcc';
       
-      try {
-        const response = await fetch(API_URL, {
-          method: 'GET'
-        });
+    try {
+  const response = await fetch(API_URL, {
+    method: 'GET',
+    mode: 'no-cors'  // Tilføj denne linje
+  });
         
         if (response.ok) {
           const data = await response.json();
