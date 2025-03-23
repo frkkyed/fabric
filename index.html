@@ -1,41 +1,29 @@
-<!DOCTYPE html>
-<html>
-<head>
-  <title>Forbindelsestest</title>
-</head>
-<body>
-  <h1>Test af forbindelse til Cloud Run</h1>
-  <button id="testButton">Test forbindelse</button>
-  <div id="result" style="margin-top: 20px; padding: 10px;"></div>
+<script>
+  const API_URL = 'https://fabric-recognition-392312507551.europe-west1.run.app';
+  const resultDiv = document.getElementById('result');
 
-  <script>
-    const API_URL = 'https://fabric-recognition-392312507551.europe-west1.run.app';
-    const resultDiv = document.getElementById('result');
-    
-    document.getElementById('testButton').addEventListener('click', async () => {
-      resultDiv.textContent = 'Tester forbindelse...';
-      resultDiv.style.backgroundColor = '#ffffcc';
-      
+  document.getElementById('testButton').addEventListener('click', async () => {
+    resultDiv.textContent = 'Tester forbindelse...';
+    resultDiv.style.backgroundColor = '#ffffcc';
+
     try {
-  const response = await fetch(API_URL, {
-    method: 'GET',
-    mode: 'no-cors'  // Tilføj denne linje
-  });
-        
-        if (response.ok) {
-          const data = await response.json();
-          resultDiv.textContent = 'Forbindelse oprettet: ' + data.message;
-          resultDiv.style.backgroundColor = '#ccffcc';
-        } else {
-          resultDiv.textContent = 'Fejl: ' + response.status;
-          resultDiv.style.backgroundColor = '#ffcccc';
-        }
-      } catch (error) {
-        resultDiv.textContent = 'Fejl: ' + error.message;
+      const response = await fetch(API_URL, {
+        method: 'GET',
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        resultDiv.textContent = 'Forbindelse oprettet: ' + data.data.message;
+        resultDiv.style.backgroundColor = '#ccffcc';
+      } else {
+        resultDiv.textContent = 'Fejl: ' + response.status;
         resultDiv.style.backgroundColor = '#ffcccc';
-        console.error('Fejl:', error);
+        console.error('Response fejl:', response);
       }
-    });
-  </script>
-</body>
-</html>
+    } catch (error) {
+      resultDiv.textContent = 'Fejl: ' + error.message;
+      resultDiv.style.backgroundColor = '#ffcccc';
+      console.error('Fetch error:', error);
+    }
+  });
+</script>
