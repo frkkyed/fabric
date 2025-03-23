@@ -1,83 +1,61 @@
-<!DOCTYPE html>
-<html lang="da">
-<head>
-  <meta charset="UTF-8" />
-  <title>Test af forbindelse til Cloud Run</title>
-</head>
-<body>
-  <h1>Test af forbindelse til Cloud Run</h1>
-  
-  <button id="testButton">Test forbindelse</button>
-  <br /><br />
-  
-  <input type="file" accept="image/*" id="imageInput" />
-  <button id="uploadButton">Upload billede</button>
-  
-  <div id="result" style="margin-top: 20px; padding: 10px;"></div>
+// index.js
+const express = require('express');
+const multer = require('multer');
+const cors = require('cors');
+const axios = require('axios');
 
-  <script>
-    const API_URL = 'https://fabric-recognition-392312507551.europe-west1.run.app';
-    const resultDiv = document.getElementById('result');
+const app = express();
+const upload = multer({ storage: multer.memoryStorage() });
 
-    document.getElementById('testButton').addEventListener('click', async () => {
-      resultDiv.textContent = 'Tester forbindelse...';
-      resultDiv.style.backgroundColor = '#ffffcc';
+app.use(cors());
+app.use(express.json());
 
-      try {
-        const response = await fetch(API_URL);
-        const data = await response.json();
+app.get('/', (req, res) => {
+  res.status(200).json({
+    status: 'success',
+    data: { message: 'Forbindelse oprettet!' },
+  });
+});
 
-        if (response.ok) {
-          resultDiv.textContent = 'Forbindelse oprettet: ' + data.data.message;
-          resultDiv.style.backgroundColor = '#ccffcc';
-        } else {
-          resultDiv.textContent = 'Fejl: ' + response.status;
-          resultDiv.style.backgroundColor = '#ffcccc';
-        }
-      } catch (error) {
-        resultDiv.textContent = 'Fejl: ' + error.message;
-        resultDiv.style.backgroundColor = '#ffcccc';
-        console.error(error);
-      }
+app.post('/upload', upload.single('image'), async (req, res) => {
+  if (!req.file) {
+    return res.status(400).json({ message: 'Ingen fil modtaget' });
+  }
+
+  try {
+    // Simuleret stofnavn
+    const fabricName = 'Cork Green';
+
+    // Airtable-opslag
+    const airtableApiKey = 'patpgJ4xbX8WFIpgP.5d7026864f7fb2a8188c9a9384e75f2f472117d03fea53b23dc9c0fa19a152f1';
+    const baseId = 'appeqwqBbIFzS0FI1';
+    const tableId = 'tblPdIJKscRfYl4Vl';
+    const viewId = 'viwNXWVSZyyXOEJRq';
+
+    const url = `https://api.airtable.com/v0/${baseId}/${tableId}?view=${viewId}&filterByFormula={Name}='${encodeURIComponent(fabricName)}'`;
+
+    const response = await axios.get(url, {
+      headers: {
+        Authorization: `Bearer ${airtableApiKey}`,
+      },
     });
 
-    document.getElementById('uploadButton').addEventListener('click', async () => {
-      const fileInput = document.getElementById('imageInput');
-      const file = fileInput.files[0];
+    const record = response.data.records[0];
 
-      if (!file) {
-        resultDiv.textContent = 'Vælg et billede først.';
-        resultDiv.style.backgroundColor = '#ffcccc';
-        return;
-      }
+    if (!record) {
+      return res.status(404).json({ message: 'Stof ikke fundet i Airtable' });
+    }
 
-      const formData = new FormData();
-      formData.append('image', file);
-
-      resultDiv.textContent = 'Uploader billede...';
-      resultDiv.style.backgroundColor = '#ffffcc';
-
-      try {
-        const response = await fetch(API_URL + '/upload', {
-          method: 'POST',
-          body: formData
-        });
-
-        const data = await response.json();
-
-        if (response.ok) {
-          resultDiv.textContent = 'Resultat: ' + data.message;
-          resultDiv.style.backgroundColor = '#ccffcc';
-        } else {
-          resultDiv.textContent = 'Fejl: ' + data.message || response.status;
-          resultDiv.style.backgroundColor = '#ffcccc';
-        }
-      } catch (error) {
-        resultDiv.textContent = 'Fejl ved upload: ' + error.message;
-        resultDiv.style.backgroundColor = '#ffcccc';
-        console.error(error);
-      }
+    res.status(200).json({
+      message: 'Stof genkendt',
+      fabric: fabricName,
+      link: record.fields.Link || null,
     });
-  </script>
-</body>
-</html>
+  } catch (error) {
+    console.error('Fejl ved opslag i Airtable:', error);
+    res.status(500).json({ message: 'Serverfejl', error: error.message });
+  }
+});
+
+// Cloud Run kræver en eksport
+exports.helloHttp = app;
