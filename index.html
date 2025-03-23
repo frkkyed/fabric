@@ -6,16 +6,14 @@
 </head>
 <body>
   <h1>Test af forbindelse til Cloud Run</h1>
-
-  <!-- Forbindelsestest -->
+  
   <button id="testButton">Test forbindelse</button>
+  <br /><br />
+  
+  <input type="file" accept="image/*" id="imageInput" />
+  <button id="uploadButton">Upload billede</button>
+  
   <div id="result" style="margin-top: 20px; padding: 10px;"></div>
-
-  <!-- Upload billede -->
-  <h2>Upload billede af stof</h2>
-  <input type="file" id="fileInput" accept="image/*" />
-  <button onclick="uploadFile()">Upload</button>
-  <div id="uploadResult" style="margin-top: 20px;"></div>
 
   <script>
     const API_URL = 'https://fabric-recognition-392312507551.europe-west1.run.app';
@@ -23,45 +21,63 @@
 
     document.getElementById('testButton').addEventListener('click', async () => {
       resultDiv.textContent = 'Tester forbindelse...';
-      resultDiv.style.backgroundColor = '#fffccc';
+      resultDiv.style.backgroundColor = '#ffffcc';
 
       try {
         const response = await fetch(API_URL);
         const data = await response.json();
-        resultDiv.textContent = 'Forbindelse oprettet: ' + data.data.message;
-        resultDiv.style.backgroundColor = '#ccffcc';
-      } catch (err) {
-        resultDiv.textContent = 'Fejl: ' + err.message;
+
+        if (response.ok) {
+          resultDiv.textContent = 'Forbindelse oprettet: ' + data.data.message;
+          resultDiv.style.backgroundColor = '#ccffcc';
+        } else {
+          resultDiv.textContent = 'Fejl: ' + response.status;
+          resultDiv.style.backgroundColor = '#ffcccc';
+        }
+      } catch (error) {
+        resultDiv.textContent = 'Fejl: ' + error.message;
         resultDiv.style.backgroundColor = '#ffcccc';
+        console.error(error);
       }
     });
 
-    async function uploadFile() {
-      const fileInput = document.getElementById('fileInput');
-      const uploadResultDiv = document.getElementById('uploadResult');
+    document.getElementById('uploadButton').addEventListener('click', async () => {
+      const fileInput = document.getElementById('imageInput');
+      const file = fileInput.files[0];
 
-      if (!fileInput.files.length) {
-        uploadResultDiv.textContent = 'Vælg et billede.';
+      if (!file) {
+        resultDiv.textContent = 'Vælg et billede først.';
+        resultDiv.style.backgroundColor = '#ffcccc';
         return;
       }
 
       const formData = new FormData();
-      formData.append('file', fileInput.files[0]);
+      formData.append('image', file);
 
-      uploadResultDiv.textContent = 'Uploader...';
+      resultDiv.textContent = 'Uploader billede...';
+      resultDiv.style.backgroundColor = '#ffffcc';
 
       try {
-        const response = await fetch(API_URL, {
+        const response = await fetch(API_URL + '/upload', {
           method: 'POST',
-          body: formData,
+          body: formData
         });
 
         const data = await response.json();
-        uploadResultDiv.textContent = `Genkendt stof: ${data.fabric}`;
-      } catch (err) {
-        uploadResultDiv.textContent = 'Fejl: ' + err.message;
+
+        if (response.ok) {
+          resultDiv.textContent = 'Resultat: ' + data.message;
+          resultDiv.style.backgroundColor = '#ccffcc';
+        } else {
+          resultDiv.textContent = 'Fejl: ' + data.message || response.status;
+          resultDiv.style.backgroundColor = '#ffcccc';
+        }
+      } catch (error) {
+        resultDiv.textContent = 'Fejl ved upload: ' + error.message;
+        resultDiv.style.backgroundColor = '#ffcccc';
+        console.error(error);
       }
-    }
+    });
   </script>
 </body>
 </html>
