@@ -1,224 +1,40 @@
 <!DOCTYPE html>
-<html lang="da">
+<html>
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Loungers Tekstilgenkendelse</title>
-    <style>
-        body {
-            font-family: 'Arial', sans-serif;
-            line-height: 1.6;
-            color: #333;
-            max-width: 800px;
-            margin: 0 auto;
-            padding: 20px;
-        }
-        h1 {
-            color: #222;
-            margin-bottom: 30px;
-            text-align: center;
-        }
-        .container {
-            background-color: #f9f9f9;
-            border-radius: 8px;
-            padding: 30px;
-            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-        }
-        .upload-section {
-            margin-bottom: 20px;
-        }
-        label {
-            display: block;
-            margin-bottom: 10px;
-            font-weight: bold;
-        }
-        #image-input {
-            display: block;
-            margin-bottom: 15px;
-        }
-        button {
-            background-color: #3a3a3a;
-            color: white;
-            border: none;
-            padding: 10px 20px;
-            border-radius: 4px;
-            cursor: pointer;
-            font-size: 16px;
-            transition: background-color 0.3s;
-        }
-        button:hover {
-            background-color: #555;
-        }
-        button:disabled {
-            background-color: #cccccc;
-            cursor: not-allowed;
-        }
-        #status {
-            margin: 20px 0;
-            font-weight: bold;
-            min-height: 24px;
-        }
-        #result {
-            background-color: white;
-            border-radius: 8px;
-            padding: 20px;
-            display: none;
-            margin-top: 20px;
-            border: 1px solid #ddd;
-        }
-        #result h2 {
-            margin-top: 0;
-            color: #222;
-        }
-        #result-image img {
-            max-width: 100%;
-            border-radius: 4px;
-            margin-top: 15px;
-        }
-        .footer {
-            text-align: center;
-            margin-top: 40px;
-            font-size: 14px;
-            color: #666;
-        }
-        .logo {
-            text-align: center;
-            margin-bottom: 20px;
-        }
-        .logo img {
-            max-width: 200px;
-        }
-        @media (max-width: 600px) {
-            .container {
-                padding: 20px;
-            }
-        }
-    </style>
+  <title>Forbindelsestest</title>
 </head>
 <body>
-    <div class="logo">
-        <!-- Erstat med dit eget logo eller fjern dette element -->
-        <h1>LOUNGERS</h1>
-    </div>
+  <h1>Test af forbindelse til Cloud Run</h1>
+  <button id="testButton">Test forbindelse</button>
+  <div id="result" style="margin-top: 20px; padding: 10px;"></div>
 
-    <div class="container">
-        <h2>Tekstilgenkendelse</h2>
-        
-        <div class="upload-section">
-            <label for="image-input">Tag et billede af dit tekstil for at få vaskeanvisninger:</label>
-            <input type="file" id="image-input" accept="image/*" capture="environment">
-            <button id="analyze-btn" disabled>Analyser tekstil</button>
-        </div>
-        
-        <div id="status"></div>
-        
-        <div id="result">
-            <h2 id="result-title"></h2>
-            <div id="result-content"></div>
-            <div id="result-image"></div>
-        </div>
-    </div>
+  <script>
+    const API_URL = 'https://fabric-recognition-392312507551.europe-west1.run.app';
+    const resultDiv = document.getElementById('result');
     
-    <div class="footer">
-        &copy; 2024 Loungers. Alle rettigheder forbeholdes.
-    </div>
-
-    <script>
-        // Elementer
-        const imageInput = document.getElementById('image-input');
-        const analyzeBtn = document.getElementById('analyze-btn');
-        const status = document.getElementById('status');
-        const result = document.getElementById('result');
-        const resultTitle = document.getElementById('result-title');
-        const resultContent = document.getElementById('result-content');
-        const resultImage = document.getElementById('result-image');
-        
-        // Cloud Run funktion URL
-        const functionUrl = 'https://fabric-recognition-392312507551.europe-west1.run.app';
-        
-        // Aktivér knappen når et billede er valgt
-        imageInput.addEventListener('change', function() {
-            analyzeBtn.disabled = !this.files.length;
+    document.getElementById('testButton').addEventListener('click', async () => {
+      resultDiv.textContent = 'Tester forbindelse...';
+      resultDiv.style.backgroundColor = '#ffffcc';
+      
+      try {
+        const response = await fetch(API_URL, {
+          method: 'GET'
         });
         
-        // Analyser billede
-        analyzeBtn.addEventListener('click', function() {
-            if (!imageInput.files.length) return;
-            
-            const file = imageInput.files[0];
-            status.textContent = "Læser billedet...";
-            result.style.display = 'none';
-            
-            // Læs billedet som base64
-            const reader = new FileReader();
-            reader.onload = function(e) {
-                const base64Image = e.target.result;
-                status.textContent = "Sender billede til analyse...";
-                
-                // Send til Cloud Run funktionen
-                fetch(functionUrl, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({ image: base64Image })
-                })
-                .then(response => {
-                    if (!response.ok) {
-                        throw new Error(`Server svarede med status: ${response.status}`);
-                    }
-                    return response.json();
-                })
-                .then(data => {
-                    displayResult(data);
-                    status.textContent = "Analyse fuldført!";
-                })
-                .catch(error => {
-                    status.textContent = `Fejl: ${error.message}`;
-                    console.error('Error:', error);
-                });
-            };
-            
-            reader.onerror = function() {
-                status.textContent = "Fejl ved læsning af fil.";
-            };
-            
-            reader.readAsDataURL(file);
-        });
-        
-        // Vis resultat
-        function displayResult(data) {
-            result.style.display = 'block';
-            
-            if (data.message) {
-                // Intet match fundet
-                resultTitle.textContent = data.message;
-                resultContent.innerHTML = "";
-                resultImage.innerHTML = "";
-                
-                if (data.possibleLabels && data.possibleLabels.length) {
-                    resultContent.innerHTML = "<p><strong>Fundne egenskaber:</strong> " + 
-                        data.possibleLabels.join(", ") + "</p>";
-                }
-            } else {
-                // Match fundet
-                resultTitle.textContent = data.name;
-                
-                let html = "";
-                if (data.style) html += `<p><strong>Stil:</strong> ${data.style}</p>`;
-                if (data.description) html += `<p><strong>Beskrivelse:</strong> ${data.description}</p>`;
-                if (data.careInstructions) html += `<p><strong>Vaskeanvisninger:</strong> ${data.careInstructions}</p>`;
-                if (data.confidence) html += `<p><strong>Nøjagtighed:</strong> ${data.confidence}%</p>`;
-                
-                resultContent.innerHTML = html;
-                
-                if (data.imageUrl) {
-                    resultImage.innerHTML = `<img src="${data.imageUrl}" alt="${data.name}">`;
-                } else {
-                    resultImage.innerHTML = "";
-                }
-            }
+        if (response.ok) {
+          const data = await response.json();
+          resultDiv.textContent = 'Forbindelse oprettet: ' + data.message;
+          resultDiv.style.backgroundColor = '#ccffcc';
+        } else {
+          resultDiv.textContent = 'Fejl: ' + response.status;
+          resultDiv.style.backgroundColor = '#ffcccc';
         }
-    </script>
+      } catch (error) {
+        resultDiv.textContent = 'Fejl: ' + error.message;
+        resultDiv.style.backgroundColor = '#ffcccc';
+        console.error('Fejl:', error);
+      }
+    });
+  </script>
 </body>
 </html>
